@@ -1,6 +1,6 @@
 # MonacoEditor.WinUI3
 
-A NuGet package that wraps the [Monaco Editor](https://microsoft.github.io/monaco-editor/) (the code editor that powers VS Code) as a native **WinUI 3** control using **WebView2**. Drop it into any WinUI 3 app and get a full-featured code editor with **two-way data binding**, IntelliSense, syntax highlighting for 70+ languages, and theming — all in one XAML tag.
+A NuGet package that wraps the [Monaco Editor](https://microsoft.github.io/monaco-editor/) (the code editor that powers VS Code) as a **WinUI 3** control using **WebView2**. Drop it into any WinUI 3 app and get a full-featured code editor with **two-way data binding**, IntelliSense, syntax highlighting for 70+ languages, and theming — all in one XAML tag.
 
 ## Features
 
@@ -10,7 +10,6 @@ A NuGet package that wraps the [Monaco Editor](https://microsoft.github.io/monac
 - **Events** — `EditorReady`, `TextChanged`
 - **Automatic layout** — the editor resizes with its container
 - **CDN or local** — loads Monaco from jsDelivr CDN by default, or bundle files locally
-- **Automated updates** — GitHub Actions workflow + PowerShell script to pull the latest Monaco release
 
 ## Quick Start
 
@@ -183,20 +182,6 @@ From the repository root:
 # CDN-only (just update the fallback URL, don't download files)
 .\scripts\Update-Monaco.ps1 -CdnOnly
 ```
-
-### Automated (GitHub Actions)
-
-The repository includes `.github/workflows/update-monaco.yml` which:
-
-1. **Runs weekly** (Monday 08:00 UTC) or on manual trigger
-2. Queries npm for the latest stable `monaco-editor` version
-3. Compares against the version in `index.html`
-4. If newer: runs `Update-Monaco.ps1` and opens a **pull request**
-
-To enable:
-
-- Ensure the `GITHUB_TOKEN` has PR creation permissions (default in most repos)
-- Optionally pin to a specific version via manual workflow dispatch
 
 ## Loading Modes
 

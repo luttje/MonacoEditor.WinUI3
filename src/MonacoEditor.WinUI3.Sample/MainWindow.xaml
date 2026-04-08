@@ -64,6 +64,7 @@
 
         <!-- Monaco Editor (two-way bound to EditorText) -->
         <monaco:MonacoEditorControl x:Name="Editor"
+                                    MonacoBaseUrl="monaco"
                                     Grid.Row="1"
                                     Text="{x:Bind EditorText, Mode=TwoWay}"
                                     EditorLanguage="plaintext"

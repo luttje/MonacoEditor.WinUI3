@@ -202,23 +202,55 @@ public sealed partial class MonacoEditorControl : Control
         {
             await _webView.EnsureCoreWebView2Async();
 
-#if DEBUG
             if (string.IsNullOrEmpty(MonacoBaseUrl))
             {
-                Debug.WriteLine(
+                // Trace (not Debug) so the message is emitted from Release-compiled NuGet packages too.
+                // TRACE is defined in both Debug and Release builds by default.
+                Trace.WriteLine(
                     "[MonacoEditor.WinUI3] WARNING: MonacoBaseUrl is not set. " +
                     "Monaco will be loaded from the jsDelivr CDN — an internet connection is required " +
                     "and this is not suitable for offline or store-distributed apps. " +
                     "Run scripts/Update-Monaco.ps1 to bundle Monaco locally, " +
                     "then set MonacoBaseUrl on the control to point to the bundled files.");
             }
-#endif
-
-            // Optionally inject the Monaco base URL before the page loads
-            if (!string.IsNullOrEmpty(MonacoBaseUrl))
+            else if (MonacoBaseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                     MonacoBaseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
+                // Absolute URL (CDN or self-hosted) — inject as-is
                 await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
-                    $"window.__MONACO_BASE_URL__ = '{EscapeJs(MonacoBaseUrl!)}';");
+                    $"window.__MONACO_BASE_URL__ = '{EscapeJs(MonacoBaseUrl)}';");
+            }
+            else
+            {
+                // Relative path — NavigateToString has no base URL, so relative paths in the
+                // JavaScript AMD loader would be unresolvable.  Map the folder to a virtual
+                // host so the browser can request files via a proper https:// origin.
+                var assemblyDir = Path.GetDirectoryName(typeof(MonacoEditorControl).Assembly.Location) ?? ".";
+                var monacoPath = Path.GetFullPath(Path.Combine(assemblyDir, MonacoBaseUrl));
+
+                if (!Directory.Exists(monacoPath))
+                {
+                    // NuGet content files are placed under MonacoWeb/ in the output directory
+                    monacoPath = Path.GetFullPath(Path.Combine(assemblyDir, "MonacoWeb", MonacoBaseUrl));
+                }
+
+                if (Directory.Exists(monacoPath))
+                {
+                    const string virtualHost = "monacoeditor-assets.local";
+                    _webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                        virtualHost,
+                        monacoPath,
+                        Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
+
+                    await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
+                        $"window.__MONACO_BASE_URL__ = 'https://{virtualHost}';");
+                }
+                else
+                {
+                    Trace.WriteLine(
+                        $"[MonacoEditor.WinUI3] WARNING: Monaco local folder not found at '{monacoPath}'. " +
+                        "Falling back to jsDelivr CDN.");
+                }
             }
 
             // Load the embedded HTML

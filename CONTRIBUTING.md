@@ -55,10 +55,6 @@ dotnet nuget push ./artifacts/MonacoEditor.WinUI3.*.nupkg --api-key YOUR_API_KEY
 
 The package typically appears on nuget.org within a few minutes, though indexing for search can take up to an hour. If you're re-publishing the same version, NuGet will reject it — versions are immutable, so bump the version number first.
 
-## Publishing via CI (GitHub Actions)
-
-The repo includes `.github/workflows/build.yml` which automates this. To enable it, add your NuGet API key as a repository secret named `NUGET_API_KEY` (Settings → Secrets and variables → Actions → New repository secret). Then create a GitHub Release — the workflow triggers on `release: published`, builds all three platforms, packs, and pushes to nuget.org automatically. Tag your release with the version number (e.g. `v1.1.0`) to keep things tidy.
-
 ## Keeping Monaco Up to Date
 
 Run the update script before a release to make sure you're shipping the latest editor:
@@ -67,8 +63,6 @@ Run the update script before a release to make sure you're shipping the latest e
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\Update-Monaco.ps1
 ```
-
-Or let the weekly GitHub Actions workflow handle it — it opens a PR automatically when a new Monaco version is available. Merge the PR, bump your package version, and publish.
 
 ## Bundling Monaco into the NuGet Package
 

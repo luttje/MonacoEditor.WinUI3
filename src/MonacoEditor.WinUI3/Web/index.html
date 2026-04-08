@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport"
+			  content="width=device-width, initial-scale=1.0" />
+		<title>Monaco Editor</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+			}
+
+			#editor-container {
+				width: 100%;
+				height: 100%;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="editor-container"></div>
+
+		<script>
+			// The C# host injects `window.__MONACO_BASE_URL__` before this page loads.
+			// If not set, fall back to the jsDelivr CDN for the bundled version.
+			const monacoBase = window.__MONACO_BASE_URL__
+				|| 'https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min';
+
+			if (!window.__MONACO_BASE_URL__) {
+				console.warn(
+					'[MonacoEditor.WinUI3] Monaco is loading from the jsDelivr CDN ' +
+					'(no MonacoBaseUrl was set on the control). ' +
+					'This requires an internet connection and is not suitable for offline or store-distributed apps. ' +
+					'Run scripts/Update-Monaco.ps1 to bundle Monaco locally, then set the MonacoBaseUrl ' +
+					'property on the control to point to the bundled files.'
+				);
+			}
+
+			// AMD loader bootstrap
+			const loaderScript = document.createElement('script');
+			loaderScript.src = monacoBase + '/vs/loader.js';
+			loaderScript.onload = () => {
+				require.config({ paths: { vs: monacoBase + '/vs' } });
+				require(['vs/editor/editor.main'], onMonacoReady);
+			};
+			document.head.appendChild(loaderScript);
+
+			let editor = null;
+			let ignoreNextChange = false; // prevents echo loops during C#→JS updates
+
+			function onMonacoReady() {
+				const container = document.getElementById('editor-container');
+
+				editor = monaco.editor.create(container, {
+					value: '',
+					language: 'plaintext',
+					theme: 'vs',
+					automaticLayout: true,
+					minimap: { enabled: true },
+					scrollBeyondLastLine: false,
+					fontSize: 14,
+					wordWrap: 'on',
+				});
+
+				// Listen for content changes → push to C# host
+				editor.onDidChangeModelContent(() => {
+					if (ignoreNextChange) {
+						ignoreNextChange = false;
+						return;
+					}
+
+					const text = editor.getValue();
+
+					try {
+						// WebView2 message channel back to C#
+						window.chrome.webview.postMessage(JSON.stringify({
+							type: 'contentChanged',
+							text: text
+						}));
+					} catch (e) {
+						// Not running inside WebView2; ignore
+					}
+				});
+
+				// Signal readiness to the C# host
+				try {
+					window.chrome.webview.postMessage(JSON.stringify({
+						type: 'ready'
+					}));
+				} catch (e) { }
+			}
+
+			/**
+			* Set the full editor text (called from C# for two-way binding).
+			* Preserves undo history by using editor operations.
+			*/
+			function setText(text) {
+				if (!editor)
+					return;
+
+				const currentText = editor.getValue();
+				if (currentText === text)
+					return;
+
+				ignoreNextChange = true;
+				editor.setValue(text);
+			}
+
+			/** Get the full editor text. */
+			function getText() {
+				return editor ? editor.getValue() : '';
+			}
+
+			/** Set the editor language (e.g. 'javascript', 'csharp', 'json'). */
+			function setLanguage(languageId) {
+				if (!editor)
+					return;
+
+				const model = editor.getModel();
+
+				if (model) {
+					monaco.editor.setModelLanguage(model, languageId);
+				}
+			}
+
+			/** Set the editor theme ('vs', 'vs-dark', 'hc-black', 'hc-light'). */
+			function setTheme(themeName) {
+				if (!editor)
+					return;
+
+				monaco.editor.setTheme(themeName);
+			}
+
+			/** Update arbitrary editor options. Expects a JSON string. */
+			function setOptions(optionsJson) {
+				if (!editor)
+					return;
+
+				try {
+					const opts = JSON.parse(optionsJson);
+					editor.updateOptions(opts);
+				} catch (e) { }
+				}
+
+			/** Set read-only state. */
+			function setReadOnly(readOnly) {
+				if (!editor)
+					return;
+
+				editor.updateOptions({
+					readOnly: readOnly
+				});
+			}
+
+			/** Focus the editor. */
+			function focusEditor() {
+				if (!editor)
+					return;
+
+				editor.focus();
+			}
+
+			/** Get current cursor position as JSON. */
+			function getCursorPosition() {
+				if (!editor)
+					return JSON.stringify({ lineNumber: 1, column: 1 });
+
+				const pos = editor.getPosition();
+
+				return JSON.stringify({ lineNumber: pos.lineNumber, column: pos.column });
+			}
+
+			/** Set cursor position. */
+			function setCursorPosition(lineNumber, column) {
+				if (!editor)
+					return;
+
+				editor.setPosition({ lineNumber: lineNumber, column: column });
+				editor.revealPositionInCenter({ lineNumber: lineNumber, column: column });
+			}
+
+			/** Insert text at the current cursor position. */
+			function insertTextAtCursor(text) {
+				if (!editor)
+					return;
+
+				const selection = editor.getSelection();
+
+				editor.executeEdits('api', [{
+					range: selection,
+					text: text,
+					forceMoveMarkers: true
+				}]);
+			}
+
+			/** Get the currently selected text. */
+			function getSelectedText() {
+				if (!editor)
+					return '';
+
+				const selection = editor.getSelection();
+				return editor.getModel().getValueInRange(selection);
+			}
+
+			/** Trigger an editor action by id (e.g. 'editor.action.formatDocument'). */
+			function triggerAction(actionId) {
+				if (!editor)
+					return;
+
+				editor.getAction(actionId)?.run();
+			}
+
+			// Handle window resize
+			window.addEventListener('resize', () => {
+				if (editor)
+					editor.layout();
+			});
+		</script>
+	</body>
+</html>

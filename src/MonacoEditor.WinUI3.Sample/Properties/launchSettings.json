@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MonacoEditor.WinUI3.Sample (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "MonacoEditor.WinUI3.Sample (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

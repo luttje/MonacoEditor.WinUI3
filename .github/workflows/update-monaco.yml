@@ -1,0 +1,94 @@
+name: Update Monaco Editor
+
+on:
+  # Run weekly on Mondays at 08:00 UTC
+  schedule:
+    - cron: '0 8 * * 1'
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Specific Monaco version to update to (leave blank for latest)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-monaco:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get current Monaco version
+        id: current
+        shell: pwsh
+        run: |
+          $htmlFile = "src/MonacoEditor.WinUI3/Web/index.html"
+          $html = Get-Content $htmlFile -Raw
+          if ($html -match "monaco-editor@([\d\.]+)/min") {
+            $currentVersion = $Matches[1]
+            Write-Host "Current version: $currentVersion"
+            echo "version=$currentVersion" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "version=0.0.0" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Get latest Monaco version from npm
+        id: latest
+        shell: pwsh
+        run: |
+          if ("${{ github.event.inputs.version }}") {
+            $latestVersion = "${{ github.event.inputs.version }}"
+          } else {
+            $npmInfo = Invoke-RestMethod -Uri 'https://registry.npmjs.org/monaco-editor/latest'
+            $latestVersion = $npmInfo.version
+          }
+          Write-Host "Latest version: $latestVersion"
+          echo "version=$latestVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Check if update is needed
+        id: check
+        shell: pwsh
+        run: |
+          $current = "${{ steps.current.outputs.version }}"
+          $latest  = "${{ steps.latest.outputs.version }}"
+          if ($current -eq $latest) {
+            Write-Host "Already on latest version ($current). No update needed."
+            echo "needed=false" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "Update available: $current -> $latest"
+            echo "needed=true" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Run update script
+        if: steps.check.outputs.needed == 'true'
+        shell: pwsh
+        run: |
+          $version = "${{ steps.latest.outputs.version }}"
+          .\scripts\Update-Monaco.ps1 -Version $version
+
+      - name: Create Pull Request
+        if: steps.check.outputs.needed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update Monaco Editor to ${{ steps.latest.outputs.version }}"
+          title: "chore: update Monaco Editor to ${{ steps.latest.outputs.version }}"
+          body: |
+            Automated update of Monaco Editor from `${{ steps.current.outputs.version }}` to `${{ steps.latest.outputs.version }}`.
+
+            ## Changes
+            - Updated CDN fallback URL in `index.html`
+            - Updated local Monaco distribution files
+
+            ## Changelog
+            See: https://github.com/microsoft/monaco-editor/releases/tag/v${{ steps.latest.outputs.version }}
+
+            ---
+            _This PR was created automatically by the Update Monaco Editor workflow._
+          branch: chore/update-monaco-${{ steps.latest.outputs.version }}
+          labels: dependencies, automated

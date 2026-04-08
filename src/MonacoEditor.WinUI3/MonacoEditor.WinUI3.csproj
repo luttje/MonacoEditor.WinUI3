@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows10.0.19041.0;net9.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>MonacoEditor.WinUI3</RootNamespace>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>MonacoEditor.WinUI3</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>luttje</Authors>
+    <Company>luttje</Company>
+    <Description>Monaco Editor (VS Code's editor) wrapped as a WinUI 3 control with two-way text
+      binding via WebView2.</Description>
+    <PackageTags>monaco;editor;winui3;webview2;code-editor;vscode</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/luttje/MonacoEditor.WinUI3</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/luttje/MonacoEditor.WinUI3</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeContentInPack>true</IncludeContentInPack>
+
+    <!-- Suppress platform-specific warnings for library packaging -->
+    <EnableMsixTooling>false</EnableMsixTooling>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3179.45" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260317003" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
+  </ItemGroup>
+
+  <!-- Embed the Monaco web assets into the package -->
+  <ItemGroup>
+    <EmbeddedResource Include="Web\**\*" />
+    <Content Include="Web\**\*">
+      <Pack>true</Pack>
+      <PackagePath>contentFiles\any\any\MonacoWeb\</PackagePath>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

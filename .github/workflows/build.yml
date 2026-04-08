@@ -33,6 +33,9 @@ jobs:
     runs-on: windows-latest
     needs: build
     if: github.event_name == 'release'
+    permissions:
+      id-token: write # For OIDC NuGet login
+
     steps:
     - uses: actions/checkout@v6
 

@@ -24,10 +24,10 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Restore
-      run: dotnet restore MonacoEditor.WinUI3.sln
+      run: dotnet restore src/MonacoEditor.WinUI3/MonacoEditor.WinUI3.csproj
 
     - name: Build
-      run: dotnet build MonacoEditor.WinUI3.sln -c Release -p:Platform=${{ matrix.platform }} --no-restore
+      run: dotnet build src/MonacoEditor.WinUI3/MonacoEditor.WinUI3.csproj -c Release -p:Platform=${{ matrix.platform }} --no-restore
 
   pack:
     runs-on: windows-latest

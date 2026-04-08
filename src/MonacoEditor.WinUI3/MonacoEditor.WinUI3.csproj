@@ -38,10 +38,11 @@
   <!-- Embed the Monaco web assets into the package -->
   <ItemGroup>
     <EmbeddedResource Include="Web\**\*" />
-    <Content Include="Web\**\*">
+    <None Include="Web\**\*">
       <Pack>true</Pack>
       <PackagePath>contentFiles\any\any\MonacoWeb\</PackagePath>
-    </Content>
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

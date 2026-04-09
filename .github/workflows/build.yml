@@ -44,10 +44,24 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Extract Monaco version from release tag
+      id: monaco
+      shell: pwsh
+      run: |
+        $tag = "${{ github.event.release.tag_name }}"
+        if ($tag -match '\+monaco\.(?<monaco>.+)$') {
+          $monacoVersion = $Matches['monaco']
+        } else {
+          Write-Error "Release tag '$tag' doesn't contain +monaco. metadata."
+          exit 1
+        }
+        Write-Host "Monaco version: $monacoVersion"
+        echo "version=$monacoVersion" >> $env:GITHUB_OUTPUT
+
     - name: Update Monaco
       run: |
         Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-        .\scripts\Update-Monaco.ps1
+        .\scripts\Update-Monaco.ps1 -Version "${{ steps.monaco.outputs.version }}"
       shell: pwsh
 
     - name: Pack NuGet

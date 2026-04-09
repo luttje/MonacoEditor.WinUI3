@@ -12,7 +12,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>MonacoEditor.WinUI3</PackageId>
-    <Version>0.3.0</Version>
+    <Version>0.3.0+monaco.0.55.1</Version>
     <Authors>luttje</Authors>
     <Company>luttje</Company>
     <Description>Monaco Editor (VS Code's editor) wrapped as a WinUI 3 control with two-way text

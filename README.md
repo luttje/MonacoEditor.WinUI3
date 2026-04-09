@@ -1,7 +1,7 @@
 # MonacoEditor.WinUI3
 
 [![GitHub License](https://img.shields.io/github/license/luttje/MonacoEditor.WinUI3)](https://github.com/luttje/MonacoEditor.WinUI3/blob/main/LICENSE)
-[![NuGet Version](https://img.shields.io/nuget/v/MonacoEditor.WinUI3)](https://www.nuget.org/packages/MonacoEditor.WinUI3)
+[![NuGet Version](https://img.shields.io/nuget/vpre/MonacoEditor.WinUI3)](https://www.nuget.org/packages/MonacoEditor.WinUI3)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/luttje/MonacoEditor.WinUI3/test.yml?label=tests)](https://github.com/luttje/MonacoEditor.WinUI3/actions/workflows/test.yml)
 
 A NuGet package that wraps the [Monaco Editor](https://microsoft.github.io/monaco-editor/) (the code editor that powers VS Code) as a **WinUI 3** control using **WebView2**. Drop it into any WinUI 3 app and get a full-featured code editor with **two-way data binding**, IntelliSense, syntax highlighting for 70+ languages, and theming.

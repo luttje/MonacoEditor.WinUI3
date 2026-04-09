@@ -1,0 +1,15 @@
+﻿<Project Sdk="MSTest.Sdk/4.0.2">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.19041</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseVSTest>true</UseVSTest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MonacoEditor.WinUI3\MonacoEditor.WinUI3.csproj" />
+  </ItemGroup>
+
+</Project>

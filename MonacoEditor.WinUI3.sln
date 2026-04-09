@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonacoEditor.WinUI3", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonacoEditor.WinUI3.Sample", "src\MonacoEditor.WinUI3.Sample\MonacoEditor.WinUI3.Sample.csproj", "{741E92DD-9D63-4101-8CEE-2935B7BEF94E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonacoEditor.WinUI3.Tests", "src\MonacoEditor.WinUI3.Tests\MonacoEditor.WinUI3.Tests.csproj", "{30E16A6C-DA12-405D-9CF5-76CD99319ED4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -46,8 +48,23 @@ Global
 		{741E92DD-9D63-4101-8CEE-2935B7BEF94E}.Release|x86.ActiveCfg = Release|x86
 		{741E92DD-9D63-4101-8CEE-2935B7BEF94E}.Release|x86.Build.0 = Release|x86
 		{741E92DD-9D63-4101-8CEE-2935B7BEF94E}.Release|x86.Deploy.0 = Release|x86
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Debug|x64.Build.0 = Debug|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Debug|x86.Build.0 = Debug|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Release|ARM64.Build.0 = Release|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Release|x64.ActiveCfg = Release|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Release|x64.Build.0 = Release|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Release|x86.ActiveCfg = Release|Any CPU
+		{30E16A6C-DA12-405D-9CF5-76CD99319ED4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {367ACCF0-0155-4787-8AC6-6BE729FE6D67}
 	EndGlobalSection
 EndGlobal

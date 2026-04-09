@@ -209,7 +209,7 @@ public sealed partial class MonacoEditorControl : Control
             {
                 // Absolute URL (CDN or self-hosted) — inject as-is
                 await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
-                    $"window.__MONACO_BASE_URL__ = '{EscapeJs(MonacoBaseUrl)}';");
+                    $"window.__MONACO_BASE_URL__ = '{JsEscape.Escape(MonacoBaseUrl)}';");
             }
             else
             {
@@ -247,7 +247,7 @@ public sealed partial class MonacoEditorControl : Control
             // Pre-apply theme background to prevent FOUC
             var initialTheme = EditorTheme ?? "vs";
             await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
-                $"document.addEventListener('DOMContentLoaded', () => {{ applyThemeBackground('{EscapeJs(initialTheme)}'); }});");
+                $"document.addEventListener('DOMContentLoaded', () => {{ applyThemeBackground('{JsEscape.Escape(initialTheme)}'); }});");
 
             // Load the embedded HTML
             var html = LoadEmbeddedHtml();
@@ -293,37 +293,16 @@ public sealed partial class MonacoEditorControl : Control
 
     private void OnWebMessageReceived(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
-        try
+        var message = WebMessageParser.Parse(args.TryGetWebMessageAsString());
+
+        switch (message)
         {
-            var json = args.TryGetWebMessageAsString();
-
-            if (string.IsNullOrEmpty(json))
-                return;
-
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            if (!root.TryGetProperty("type", out var typeProp))
-                return;
-
-            var type = typeProp.GetString();
-
-            switch (type)
-            {
-                case "ready":
-                    HandleEditorReady();
-                    break;
-                case "contentChanged":
-                    if (root.TryGetProperty("text", out var textProp))
-                    {
-                        HandleContentChanged(textProp.GetString() ?? string.Empty);
-                    }
-                    break;
-            }
-        }
-        catch (JsonException ex)
-        {
-            Debug.WriteLine($"[MonacoEditor] Message error: {ex}");
+            case WebMessage.Ready:
+                HandleEditorReady();
+                break;
+            case WebMessage.ContentChanged(var text):
+                HandleContentChanged(text);
+                break;
         }
     }
 
@@ -384,8 +363,7 @@ public sealed partial class MonacoEditorControl : Control
             return;
         }
 
-        var escaped = EscapeJs(text);
-        await _webView.ExecuteScriptAsync($"setText(`{escaped}`);");
+        await _webView.ExecuteScriptAsync(JsScripts.SetText(text));
     }
 
     private async void PushLanguageToEditor(string language)
@@ -396,7 +374,7 @@ public sealed partial class MonacoEditorControl : Control
             return;
         }
 
-        await _webView.ExecuteScriptAsync($"setLanguage('{EscapeJs(language)}');");
+        await _webView.ExecuteScriptAsync(JsScripts.SetLanguage(language));
     }
 
     private async void PushThemeToEditor(string theme)
@@ -407,8 +385,7 @@ public sealed partial class MonacoEditorControl : Control
             return;
         }
 
-        // Update both Monaco theme and body background
-        await _webView.ExecuteScriptAsync($"setTheme('{EscapeJs(theme)}'); applyThemeBackground('{EscapeJs(theme)}');");
+        await _webView.ExecuteScriptAsync(JsScripts.SetTheme(theme));
     }
 
     private async void PushReadOnlyToEditor(bool readOnly)
@@ -419,7 +396,7 @@ public sealed partial class MonacoEditorControl : Control
             return;
         }
 
-        await _webView.ExecuteScriptAsync($"setReadOnly({(readOnly ? "true" : "false")});");
+        await _webView.ExecuteScriptAsync(JsScripts.SetReadOnly(readOnly));
     }
 
     /// <summary>Get the full text content asynchronously.</summary>
@@ -428,7 +405,7 @@ public sealed partial class MonacoEditorControl : Control
         if (!_isEditorReady || _webView is null)
             return Text;
 
-        var result = await _webView.ExecuteScriptAsync("getText();");
+        var result = await _webView.ExecuteScriptAsync(JsScripts.GetText());
         return JsonSerializer.Deserialize<string>(result) ?? string.Empty;
     }
 
@@ -441,16 +418,14 @@ public sealed partial class MonacoEditorControl : Control
             return;
         }
 
-        var escaped = EscapeJs(optionsJson);
-
-        await _webView.ExecuteScriptAsync($"setOptions('{escaped}');");
+        await _webView.ExecuteScriptAsync(JsScripts.SetOptions(optionsJson));
     }
 
     /// <summary>Focus the editor.</summary>
     public async Task FocusEditorAsync()
     {
         if (_isEditorReady && _webView is not null)
-            await _webView.ExecuteScriptAsync("focusEditor();");
+            await _webView.ExecuteScriptAsync(JsScripts.FocusEditor());
     }
 
     /// <summary>Insert text at the current cursor position.</summary>
@@ -459,9 +434,7 @@ public sealed partial class MonacoEditorControl : Control
         if (!_isEditorReady || _webView is null)
             return;
 
-        var escaped = EscapeJs(text);
-
-        await _webView.ExecuteScriptAsync($"insertTextAtCursor(`{escaped}`);");
+        await _webView.ExecuteScriptAsync(JsScripts.InsertTextAtCursor(text));
     }
 
     /// <summary>Get the currently selected text.</summary>
@@ -470,7 +443,7 @@ public sealed partial class MonacoEditorControl : Control
         if (!_isEditorReady || _webView is null)
             return string.Empty;
 
-        var result = await _webView.ExecuteScriptAsync("getSelectedText();");
+        var result = await _webView.ExecuteScriptAsync(JsScripts.GetSelectedText());
 
         return JsonSerializer.Deserialize<string>(result) ?? string.Empty;
     }
@@ -481,7 +454,7 @@ public sealed partial class MonacoEditorControl : Control
         if (!_isEditorReady || _webView is null)
             return (1, 1);
 
-        var result = await _webView.ExecuteScriptAsync("getCursorPosition();");
+        var result = await _webView.ExecuteScriptAsync(JsScripts.GetCursorPosition());
         var json = JsonSerializer.Deserialize<string>(result) ?? "{}";
 
         using var doc = JsonDocument.Parse(json);
@@ -498,7 +471,7 @@ public sealed partial class MonacoEditorControl : Control
         if (!_isEditorReady || _webView is null)
             return;
 
-        await _webView.ExecuteScriptAsync($"setCursorPosition({lineNumber}, {column});");
+        await _webView.ExecuteScriptAsync(JsScripts.SetCursorPosition(lineNumber, column));
     }
 
     /// <summary>Trigger a built-in Monaco action by ID.</summary>
@@ -507,23 +480,6 @@ public sealed partial class MonacoEditorControl : Control
         if (!_isEditorReady || _webView is null)
             return;
 
-        await _webView.ExecuteScriptAsync($"triggerAction('{EscapeJs(actionId)}');");
-    }
-
-    /// <summary>
-    /// Escapes a string for safe insertion into JavaScript template literals
-    /// and single-quoted strings.
-    /// </summary>
-    private static string EscapeJs(string value)
-    {
-        return value
-            .Replace("\\", "\\\\")
-            .Replace("`", "\\`")
-            .Replace("'", "\\'")
-            .Replace("\"", "\\\"")
-            .Replace("$", "\\$")
-            .Replace("\r\n", "\\n")
-            .Replace("\r", "\\n")
-            .Replace("\n", "\\n");
+        await _webView.ExecuteScriptAsync(JsScripts.TriggerAction(actionId));
     }
 }

@@ -1,19 +1,14 @@
-name: Build & Pack
+name: Build
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  release:
-    types: [ published ]
 
 jobs:
   build:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        platform: [ x64, x86, ARM64 ]
 
     steps:
     - uses: actions/checkout@v6
@@ -27,63 +22,4 @@ jobs:
       run: dotnet restore src/MonacoEditor.WinUI3/MonacoEditor.WinUI3.csproj
 
     - name: Build
-      run: dotnet build src/MonacoEditor.WinUI3/MonacoEditor.WinUI3.csproj -c Release -p:Platform=${{ matrix.platform }} --no-restore
-
-  pack:
-    runs-on: windows-latest
-    needs: build
-    if: github.event_name == 'release'
-    permissions:
-      id-token: write # For OIDC NuGet login
-
-    steps:
-    - uses: actions/checkout@v6
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: '8.0.x'
-
-    - name: Extract Monaco version from release tag
-      id: monaco
-      shell: pwsh
-      run: |
-        $tag = "${{ github.event.release.tag_name }}"
-        if ($tag -match '\+monaco\.(?<monaco>.+)$') {
-          $monacoVersion = $Matches['monaco']
-        } else {
-          Write-Error "Release tag '$tag' doesn't contain +monaco. metadata."
-          exit 1
-        }
-        Write-Host "Monaco version: $monacoVersion"
-        echo "version=$monacoVersion" >> $env:GITHUB_OUTPUT
-
-    - name: Update Monaco
-      run: |
-        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-        .\scripts\Update-Monaco.ps1 -Version "${{ steps.monaco.outputs.version }}"
-      shell: pwsh
-
-    - name: Pack NuGet
-      run: dotnet pack src/MonacoEditor.WinUI3/MonacoEditor.WinUI3.csproj -c Release -o ./artifacts
-
-    # Get a short-lived NuGet API key
-    - name: NuGet login (OIDC → temp API key)
-      uses: NuGet/login@v1
-      id: login
-      with:
-        user: luttje
-
-    # Push the package
-    - name: NuGet push
-      run: |
-        foreach ($pkg in Get-Item ./artifacts/*.nupkg) {
-          dotnet nuget push $pkg.FullName --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json --skip-duplicate
-        }
-      shell: pwsh
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v6
-      with:
-        name: nuget-package
-        path: ./artifacts/*.nupkg
+      run: dotnet build src/MonacoEditor.WinUI3/MonacoEditor.WinUI3.csproj -c Release --no-restore

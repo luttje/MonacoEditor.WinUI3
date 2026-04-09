@@ -20,11 +20,11 @@ jobs:
     - name: Get current Monaco version from latest tag
       id: current
       run: |
-        # Find the latest tag matching the pattern X.Y.Z+monaco.A.B.C
-        TAG=$(git tag --list --sort=-v:refname | grep '+monaco\.' | head -n 1)
+        # Find the latest tag matching the pattern X.Y.Z-monaco.A.B.C
+        TAG=$(git tag --list --sort=-v:refname | grep -- '-monaco\.' | head -n 1)
 
         if [ -z "$TAG" ]; then
-          echo "No existing tag with +monaco. metadata found."
+          echo "No existing tag with -monaco. pre-release found."
           echo "monaco_version=0.0.0" >> "$GITHUB_OUTPUT"
           echo "pkg_version=0.0.0" >> "$GITHUB_OUTPUT"
           exit 0
@@ -32,9 +32,9 @@ jobs:
 
         echo "Latest tag: $TAG"
 
-        # Parse: 0.4.0+monaco.0.55.1 → pkg=0.4.0, monaco=0.55.1
-        PKG_VERSION="${TAG%%+*}"
-        MONACO_VERSION="${TAG##*+monaco.}"
+        # Parse: 0.4.1-monaco.0.55.1 → pkg=0.4.1, monaco=0.55.1
+        PKG_VERSION="${TAG%%-monaco*}"
+        MONACO_VERSION="${TAG##*-monaco.}"
 
         echo "Package version: $PKG_VERSION"
         echo "Monaco version:  $MONACO_VERSION"
@@ -71,7 +71,7 @@ jobs:
       if: steps.compare.outputs.needs_update == 'true'
       id: new_version
       run: |
-        NEW_VERSION="${{ steps.current.outputs.pkg_version }}+monaco.${{ steps.latest.outputs.monaco_version }}"
+        NEW_VERSION="${{ steps.current.outputs.pkg_version }}-monaco.${{ steps.latest.outputs.monaco_version }}"
         echo "New version: $NEW_VERSION"
 
         CSPROJ="src/MonacoEditor.WinUI3/MonacoEditor.WinUI3.csproj"

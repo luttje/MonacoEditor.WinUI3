@@ -23,10 +23,10 @@ jobs:
       shell: pwsh
       run: |
         $tag = "${{ github.event.release.tag_name }}"
-        if ($tag -match '\+monaco\.(?<monaco>.+)$') {
+        if ($tag -match '-monaco\.(?<monaco>.+)$') {
           $monacoVersion = $Matches['monaco']
         } else {
-          Write-Error "Release tag '$tag' doesn't contain +monaco. metadata."
+          Write-Error "Release tag '$tag' doesn't contain -monaco. pre-release version."
           exit 1
         }
         Write-Host "Monaco version: $monacoVersion"

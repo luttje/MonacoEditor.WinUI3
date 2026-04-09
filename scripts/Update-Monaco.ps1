@@ -18,23 +18,17 @@
 .PARAMETER Version
     Optional. A specific monaco-editor version to download (e.g. "0.55.1").
     If omitted, the latest stable version from npm is used.
-
-.PARAMETER CdnOnly
-    Optional. If set, only updates the CDN URL in index.html without downloading
-    files locally. Use this for CDN-only deployments.
 #>
 
 [CmdletBinding()]
 param(
-    [string]$Version,
-    [switch]$CdnOnly
+    [string]$Version
 )
 
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot   = Split-Path -Parent $PSScriptRoot
 $WebDir     = Join-Path $RepoRoot 'src\MonacoEditor.WinUI3\Web'
-$HtmlFile   = Join-Path $WebDir 'index.html'
 $TempDir    = Join-Path $env:TEMP "monaco-update-$(Get-Random)"
 
 # ── Step 1: Resolve version ──────────────────────────────────────────────
@@ -47,24 +41,7 @@ if (-not $Version) {
 
 Write-Host "  Target version: monaco-editor@$Version" -ForegroundColor Green
 
-# ── Step 2: Update the CDN fallback URL in index.html ────────────────────
-
-if (Test-Path $HtmlFile) {
-    $html = Get-Content $HtmlFile -Raw
-    $updatedHtml = $html -replace `
-        "monaco-editor@[\d\.]+/min", `
-        "monaco-editor@$Version/min"
-    Set-Content -Path $HtmlFile -Value $updatedHtml -NoNewline
-    Write-Host "  Updated CDN URL in index.html" -ForegroundColor Green
-}
-
-if ($CdnOnly) {
-    Write-Host '  CDN-only mode: skipping file download.' -ForegroundColor Yellow
-    Write-Host "  Done! Monaco Editor updated to $Version (CDN reference only)." -ForegroundColor Green
-    exit 0
-}
-
-# ── Step 3: Download the npm tarball ─────────────────────────────────────
+# ── Step 2: Download the npm tarball ─────────────────────────────────────
 
 Write-Host '  Downloading monaco-editor tarball...' -ForegroundColor Cyan
 
@@ -75,7 +52,7 @@ $TarballPath = Join-Path $TempDir "monaco-editor-$Version.tgz"
 
 Invoke-WebRequest -Uri $TarballUrl -OutFile $TarballPath
 
-# ── Step 4: Extract ──────────────────────────────────────────────────────
+# ── Step 3: Extract ──────────────────────────────────────────────────────
 
 Write-Host '  Extracting...' -ForegroundColor Cyan
 
@@ -92,7 +69,7 @@ if (-not (Test-Path $MonacoSrc)) {
     exit 1
 }
 
-# ── Step 5: Copy into project ────────────────────────────────────────────
+# ── Step 4: Copy into project ────────────────────────────────────────────
 
 $MonacoDest = Join-Path $WebDir 'monaco'
 
@@ -104,16 +81,7 @@ if (Test-Path $MonacoDest) {
 Write-Host '  Copying new Monaco files...' -ForegroundColor Cyan
 Copy-Item -Path $MonacoSrc -Destination $MonacoDest -Recurse
 
-# ── Step 6: Update the HTML to use local path ────────────────────────────
-
-if (Test-Path $HtmlFile) {
-    # If the user wants bundled local files, they can update __MONACO_BASE_URL__
-    # The default in the HTML still points to CDN as a fallback.
-    Write-Host "  Local Monaco files placed at: $MonacoDest" -ForegroundColor Green
-    Write-Host "  Set MonacoBaseUrl='monaco' on the control to use local files." -ForegroundColor Yellow
-}
-
-# ── Step 7: Write version marker ─────────────────────────────────────────
+# ── Step 5: Write version marker ─────────────────────────────────────────
 
 $VersionFile = Join-Path $MonacoDest 'VERSION.txt'
 Set-Content -Path $VersionFile -Value $Version
@@ -130,4 +98,4 @@ Write-Host ''
 Write-Host '  Next steps:' -ForegroundColor White
 Write-Host '    1. Rebuild the project' -ForegroundColor White
 Write-Host '    2. Test that the editor loads correctly' -ForegroundColor White
-Write-Host '    3. Commit the changes' -ForegroundColor White
+Write-Host '    3. Package the MonacoEditor.WinUI3 project for distribution' -ForegroundColor White

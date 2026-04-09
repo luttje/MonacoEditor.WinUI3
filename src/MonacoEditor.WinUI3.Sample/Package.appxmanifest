@@ -11,7 +11,7 @@
   <Identity
     Name="7600dd71-44e6-446c-871b-a72960900fc2"
     Publisher="CN=Lutt.online"
-    Version="0.3.0.0" />
+    Version="0.4.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="7600dd71-44e6-446c-871b-a72960900fc2"
     PhonePublisherId="00000000-0000-0000-0000-000000000000" />

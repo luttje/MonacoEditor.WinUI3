@@ -10,15 +10,15 @@
 
   <Identity
     Name="7600dd71-44e6-446c-871b-a72960900fc2"
-    Publisher="CN=twl"
-    Version="0.2.1.0" />
+    Publisher="CN=Lutt.online"
+    Version="0.3.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="7600dd71-44e6-446c-871b-a72960900fc2"
     PhonePublisherId="00000000-0000-0000-0000-000000000000" />
 
   <Properties>
     <DisplayName>MonacoEditor.WinUI3.Sample</DisplayName>
-    <PublisherDisplayName>twl</PublisherDisplayName>
+    <PublisherDisplayName>Lutt.online</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

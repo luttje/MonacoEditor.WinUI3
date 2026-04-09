@@ -33,8 +33,7 @@
     Tools extension to be activated for this project even if the Windows App SDK Nuget
     package has not yet been restored.
   -->
-  <ItemGroup
-    Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
@@ -50,8 +49,7 @@
     Explorer "Package and Publish" context menu entry to be enabled for this project even if
     the Windows App SDK Nuget package has not yet been restored.
   -->
-  <PropertyGroup
-    Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
   </PropertyGroup>
 
@@ -74,21 +72,20 @@
   -->
   <PropertyGroup>
     <WebSourceDir>$(MSBuildProjectDirectory)\..\MonacoEditor.WinUI3\Web</WebSourceDir>
+    <PackageCertificateThumbprint>02A8AAA9E85435ADBAA8F25A073B9CBDEAE8FD5B</PackageCertificateThumbprint>
+    <PackageCertificateKeyFile>LuttOnline_DevKey.pfx</PackageCertificateKeyFile>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
   </PropertyGroup>
 
   <Target Name="CheckMonacoAssets" BeforeTargets="Build">
-    <Error Condition="!Exists('$(WebSourceDir)')"
-      Text="Monaco directory not found at '$(WebSourceDir)'. Run the Update-Monaco script first." />
-    <Error Condition="!Exists('$(WebSourceDir)\monaco\VERSION.txt')"
-      Text="Monaco VERSION.txt not found in '$(WebSourceDir)'. Run the Update-Monaco script first." />
+    <Error Condition="!Exists('$(WebSourceDir)')" Text="Monaco directory not found at '$(WebSourceDir)'. Run the Update-Monaco script first." />
+    <Error Condition="!Exists('$(WebSourceDir)\monaco\VERSION.txt')" Text="Monaco VERSION.txt not found in '$(WebSourceDir)'. Run the Update-Monaco script first." />
   </Target>
 
   <Target Name="CopyMonacoAssets" AfterTargets="Build" DependsOnTargets="CheckMonacoAssets">
     <ItemGroup>
       <MonacoFiles Include="$(WebSourceDir)\**\*" />
     </ItemGroup>
-    <Copy SourceFiles="@(MonacoFiles)"
-      DestinationFiles="@(MonacoFiles->'$(OutDir)AppX\MonacoWeb\%(RecursiveDir)%(Filename)%(Extension)')"
-      SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(MonacoFiles)" DestinationFiles="@(MonacoFiles->'$(OutDir)AppX\MonacoWeb\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 </Project>

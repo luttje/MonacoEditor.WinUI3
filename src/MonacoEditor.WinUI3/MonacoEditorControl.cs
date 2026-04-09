@@ -165,8 +165,8 @@ public sealed partial class MonacoEditorControl : Control
         );
 
     /// <summary>
-    /// Optional override for the Monaco Editor base URL. If null, uses the
-    /// bundled version or falls back to jsDelivr CDN.
+    /// Optional override for the Monaco Editor base URL. If null, the bundled
+    /// local files are used. Set to a CDN URL to load Monaco from a remote source.
     /// </summary>
     public string? MonacoBaseUrl
     {
@@ -196,26 +196,16 @@ public sealed partial class MonacoEditorControl : Control
 
     private async Task InitializeAsync()
     {
-        if (_webView is null) 
+        if (_webView is null)
             return;
 
         try
         {
             await _webView.EnsureCoreWebView2Async();
 
-            if (string.IsNullOrEmpty(MonacoBaseUrl))
-            {
-                // Trace (not Debug) so the message is emitted from Release-compiled NuGet packages too.
-                // TRACE is defined in both Debug and Release builds by default.
-                Trace.WriteLine(
-                    "[MonacoEditor.WinUI3] WARNING: MonacoBaseUrl is not set. " +
-                    "Monaco will be loaded from the jsDelivr CDN — an internet connection is required " +
-                    "and this is not suitable for offline or store-distributed apps. " +
-                    "Run scripts/Update-Monaco.ps1 to bundle Monaco locally, " +
-                    "then set MonacoBaseUrl on the control to point to the bundled files.");
-            }
-            else if (MonacoBaseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                     MonacoBaseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(MonacoBaseUrl) &&
+                (MonacoBaseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                 MonacoBaseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
             {
                 // Absolute URL (CDN or self-hosted) — inject as-is
                 await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
@@ -223,16 +213,15 @@ public sealed partial class MonacoEditorControl : Control
             }
             else
             {
-                // Relative path — NavigateToString has no base URL, so relative paths in the
-                // JavaScript AMD loader would be unresolvable.  Map the folder to a virtual
-                // host so the browser can request files via a proper https:// origin.
+                // Local path: use explicit relative path or default to "monaco"
+                var relativePath = string.IsNullOrEmpty(MonacoBaseUrl) ? "monaco" : MonacoBaseUrl;
                 var assemblyDir = Path.GetDirectoryName(typeof(MonacoEditorControl).Assembly.Location) ?? ".";
-                var monacoPath = Path.GetFullPath(Path.Combine(assemblyDir, MonacoBaseUrl));
+                var monacoPath = Path.GetFullPath(Path.Combine(assemblyDir, relativePath));
 
                 if (!Directory.Exists(monacoPath))
                 {
                     // NuGet content files are placed under MonacoWeb/ in the output directory
-                    monacoPath = Path.GetFullPath(Path.Combine(assemblyDir, "MonacoWeb", MonacoBaseUrl));
+                    monacoPath = Path.GetFullPath(Path.Combine(assemblyDir, "MonacoWeb", relativePath));
                 }
 
                 if (Directory.Exists(monacoPath))
@@ -249,8 +238,9 @@ public sealed partial class MonacoEditorControl : Control
                 else
                 {
                     Trace.WriteLine(
-                        $"[MonacoEditor.WinUI3] WARNING: Monaco local folder not found at '{monacoPath}'. " +
-                        "Falling back to jsDelivr CDN.");
+                        $"[MonacoEditor.WinUI3] ERROR: Bundled Monaco files not found. " +
+                        "Run scripts/Update-Monaco.ps1 to download Monaco files, or set MonacoBaseUrl " +
+                        "to a CDN URL (e.g. \"https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min\").");
                 }
             }
 
@@ -345,26 +335,26 @@ public sealed partial class MonacoEditorControl : Control
         if (!_hasShownWebView && _webView is not null)
         {
             _hasShownWebView = true;
-            DispatcherQueue.TryEnqueue(() => 
+            DispatcherQueue.TryEnqueue(() =>
             {
                 _webView.Visibility = Visibility.Visible;
             });
         }
 
         // Flush any pending state
-        if (_pendingText is not null) 
+        if (_pendingText is not null)
             PushTextToEditor(_pendingText);
 
-        if (_pendingLanguage is not null) 
+        if (_pendingLanguage is not null)
             PushLanguageToEditor(_pendingLanguage);
 
-        if (_pendingTheme is not null) 
+        if (_pendingTheme is not null)
             PushThemeToEditor(_pendingTheme);
 
-        if (_pendingReadOnly is not null) 
+        if (_pendingReadOnly is not null)
             PushReadOnlyToEditor(_pendingReadOnly.Value);
 
-        if (_pendingOptions is not null) 
+        if (_pendingOptions is not null)
             _ = SetOptionsAsync(_pendingOptions);
 
         _pendingText = null;
@@ -477,7 +467,7 @@ public sealed partial class MonacoEditorControl : Control
     /// <summary>Get the currently selected text.</summary>
     public async Task<string> GetSelectedTextAsync()
     {
-        if (!_isEditorReady || _webView is null) 
+        if (!_isEditorReady || _webView is null)
             return string.Empty;
 
         var result = await _webView.ExecuteScriptAsync("getSelectedText();");
@@ -505,7 +495,7 @@ public sealed partial class MonacoEditorControl : Control
     /// <summary>Set the cursor position.</summary>
     public async Task SetCursorPositionAsync(int lineNumber, int column)
     {
-        if (!_isEditorReady || _webView is null) 
+        if (!_isEditorReady || _webView is null)
             return;
 
         await _webView.ExecuteScriptAsync($"setCursorPosition({lineNumber}, {column});");
@@ -514,7 +504,7 @@ public sealed partial class MonacoEditorControl : Control
     /// <summary>Trigger a built-in Monaco action by ID.</summary>
     public async Task TriggerActionAsync(string actionId)
     {
-        if (!_isEditorReady || _webView is null) 
+        if (!_isEditorReady || _webView is null)
             return;
 
         await _webView.ExecuteScriptAsync($"triggerAction('{EscapeJs(actionId)}');");

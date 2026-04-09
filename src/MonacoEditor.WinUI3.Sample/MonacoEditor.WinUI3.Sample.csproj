@@ -33,7 +33,8 @@
     Tools extension to be activated for this project even if the Windows App SDK Nuget
     package has not yet been restored.
   -->
-  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+  <ItemGroup
+    Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
@@ -49,7 +50,8 @@
     Explorer "Package and Publish" context menu entry to be enabled for this project even if
     the Windows App SDK Nuget package has not yet been restored.
   -->
-  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+  <PropertyGroup
+    Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
   </PropertyGroup>
 
@@ -60,4 +62,33 @@
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
   </PropertyGroup>
+
+  <!--
+    I can't figure out how to get MonacoEditor.WinUI3 to both:
+    - Embed the Monaco web assets as content files in the Nuget package
+    - Copy the Monaco web assets to the output directory of this sample project (when used as a project
+  reference)
+    So for now, I'm just copying the Monaco web assets from the source directory to the output
+    directory of this sample project during the build. This isn't ideal, but it works for development
+    and testing purposes.
+  -->
+  <PropertyGroup>
+    <WebSourceDir>$(MSBuildProjectDirectory)\..\MonacoEditor.WinUI3\Web</WebSourceDir>
+  </PropertyGroup>
+
+  <Target Name="CheckMonacoAssets" BeforeTargets="Build">
+    <Error Condition="!Exists('$(WebSourceDir)')"
+      Text="Monaco directory not found at '$(WebSourceDir)'. Run the Update-Monaco script first." />
+    <Error Condition="!Exists('$(WebSourceDir)\monaco\VERSION.txt')"
+      Text="Monaco VERSION.txt not found in '$(WebSourceDir)'. Run the Update-Monaco script first." />
+  </Target>
+
+  <Target Name="CopyMonacoAssets" AfterTargets="Build" DependsOnTargets="CheckMonacoAssets">
+    <ItemGroup>
+      <MonacoFiles Include="$(WebSourceDir)\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(MonacoFiles)"
+      DestinationFiles="@(MonacoFiles->'$(OutDir)AppX\MonacoWeb\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
 </Project>

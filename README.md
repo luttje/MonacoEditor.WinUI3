@@ -1,27 +1,28 @@
 # MonacoEditor.WinUI3
 
-A NuGet package that wraps the [Monaco Editor](https://microsoft.github.io/monaco-editor/) (the code editor that powers VS Code) as a **WinUI 3** control using **WebView2**. Drop it into any WinUI 3 app and get a full-featured code editor with **two-way data binding**, IntelliSense, syntax highlighting for 70+ languages, and theming — all in one XAML tag.
+A NuGet package that wraps the [Monaco Editor](https://microsoft.github.io/monaco-editor/) (the code editor that powers VS Code) as a **WinUI 3** control using **WebView2**. Drop it into any WinUI 3 app and get a full-featured code editor with **two-way data binding**, IntelliSense, syntax highlighting for 70+ languages, and theming.
 
 ## Features
 
-- **Two-way `Text` binding** — bind the editor content to your ViewModel with `{x:Bind Text, Mode=TwoWay}`
-- **Dependency properties** — `Text`, `EditorLanguage`, `EditorTheme`, `IsReadOnly`, `MonacoBaseUrl`
-- **Rich async API** — `GetTextAsync`, `InsertTextAtCursorAsync`, `GetSelectedTextAsync`, `SetCursorPositionAsync`, `TriggerActionAsync`, and more
-- **Events** — `EditorReady`, `TextChanged`
-- **Automatic layout** — the editor resizes with its container
-- **CDN or local** — loads Monaco from jsDelivr CDN by default, or bundle files locally
+- **Two-way `Text` binding**: bind the editor content to your ViewModel with `{x:Bind Text, Mode=TwoWay}`
+- **Rich async API**: `GetTextAsync`, `InsertTextAtCursorAsync`, `GetSelectedTextAsync`, `SetCursorPositionAsync`, `TriggerActionAsync`, and more
+- **Events**: `EditorReady`, `TextChanged`
+- **Automatic layout**: the editor resizes with its container
+- **Bundled by default**: Monaco files are included in the package; no internet connection required. CDN loading is available as an opt-in.
 
 ## Quick Start
 
 ### 1. Install
 
-```
+```sh
 dotnet add package MonacoEditor.WinUI3
 ```
 
 Or via NuGet Package Manager in Visual Studio, search for `MonacoEditor.WinUI3`.
 
 ### 2. Add the namespace
+
+To your Window or Page XAML open tag, add `xmlns:monaco="using:MonacoEditor.WinUI3"`:
 
 ```xml
 <Window
@@ -38,15 +39,18 @@ Or via NuGet Package Manager in Visual Studio, search for `MonacoEditor.WinUI3`.
     EditorTheme="vs-dark" />
 ```
 
-That's it. The editor loads Monaco from the CDN, initializes, and keeps `MyCode` in sync.
+That's it. The editor loads Monaco from bundled local files.
 
 ## Full Example (MVVM)
 
 ```xml
-<Page
-    xmlns:monaco="using:MonacoEditor.WinUI3">
-
-    <Grid RowDefinitions="*,Auto">
+<Page xmlns:monaco="using:MonacoEditor.WinUI3">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        
         <monaco:MonacoEditorControl
             Text="{x:Bind ViewModel.SourceCode, Mode=TwoWay}"
             EditorLanguage="{x:Bind ViewModel.Language, Mode=OneWay}"
@@ -65,30 +69,35 @@ That's it. The editor loads Monaco from the CDN, initializes, and keeps `MyCode`
 ```csharp
 public partial class EditorViewModel : ObservableObject
 {
-    [ObservableProperty] private string sourceCode = "// Hello, Monaco!";
-    [ObservableProperty] private string language = "javascript";
-    [ObservableProperty] private string theme = "vs-dark";
-    [ObservableProperty] private bool isReadOnly = false;
-    [ObservableProperty] private string statusMessage = "";
+    [ObservableProperty] 
+    public partial string SourceCode { get; set; } = "// Hello, Monaco!";
+    [ObservableProperty] 
+    public partial string Language { get; set; } = "javascript";
+    [ObservableProperty] 
+    public partial string Theme { get; set; } = "vs-dark";
+    [ObservableProperty] 
+    public partial bool IsReadOnly { get; set; } = false;
+    [ObservableProperty] 
+    public partial string StatusMessage { get; set; } = "";
 }
 ```
 
 ## API Reference
 
-### Dependency Properties
+### Properties
 
 | Property | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `Text` | `string` | `""` | Full editor content. Supports two-way binding. |
 | `EditorLanguage` | `string` | `"plaintext"` | Language mode for syntax highlighting. |
 | `EditorTheme` | `string` | `"vs"` | Visual theme: `vs`, `vs-dark`, `hc-black`, `hc-light`. |
 | `IsReadOnly` | `bool` | `false` | Toggle read-only mode. |
-| `MonacoBaseUrl` | `string?` | `null` | Override the Monaco source URL (CDN or local path). |
+| `MonacoBaseUrl` | `string?` | `null` | Override the Monaco source URL. Set to a CDN URL to load remotely instead of using bundled files. |
 
 ### Events
 
 | Event | Args | Description |
-|---|---|---|
+| --- | --- | --- |
 | `EditorReady` | `EventArgs` | Fired once when the editor is fully loaded and interactive. |
 | `TextChanged` | `MonacoTextChangedEventArgs` | Fired on each user-initiated content change. `e.Text` contains the full text. |
 
@@ -134,8 +143,6 @@ await Editor.SetOptionsAsync("""
 
 ## How It Works
 
-The architecture is simple and robust:
-
 ```txt
 ┌─────────────────────────────────────┐
 │          WinUI 3 Application        │
@@ -166,51 +173,23 @@ The architecture is simple and robust:
 - **JavaScript to C#**: Monaco's `onDidChangeModelContent` event triggers `postMessage` back to the C# `WebMessageReceived` handler, which updates the `Text` dependency property
 - **Echo suppression**: A flag prevents infinite update loops when the binding updates flow in both directions
 
-## Updating Monaco Editor
-
-### Manual (PowerShell)
-
-From the repository root:
-
-```powershell
-# Update to latest
-.\scripts\Update-Monaco.ps1
-
-# Update to a specific version
-.\scripts\Update-Monaco.ps1 -Version "0.55.1"
-
-# CDN-only (just update the fallback URL, don't download files)
-.\scripts\Update-Monaco.ps1 -CdnOnly
-```
-
 ## Loading Modes
 
-### CDN (default, zero config)
+### Bundled (default, zero config)
 
-Monaco loads from `cdn.jsdelivr.net`. Nothing to download or bundle. The control works immediately after installation.
+Monaco is bundled with the NuGet package and loaded from local files. No internet connection is needed, which is ideal for desktop and store-distributed apps.
 
-### Local / Bundled
+### CDN / Self-hosted
 
-1. Run `.\scripts\Update-Monaco.ps1` to download Monaco into `src/MonacoEditor.WinUI3/Web/monaco/`
-2. Set `MonacoBaseUrl` on the control:
-
-```xml
-<monaco:MonacoEditorControl
-    MonacoBaseUrl="monaco"
-    ... />
-```
-
-1. The files are embedded in the NuGet package via `<EmbeddedResource>`
-
-### Custom CDN / Self-hosted
-
-Point to any URL that hosts the Monaco `min/vs` directory:
+To load Monaco from a CDN or self-hosted URL instead of the bundled files, set `MonacoBaseUrl` explicitly:
 
 ```xml
 <monaco:MonacoEditorControl
-    MonacoBaseUrl="https://my-cdn.example.com/monaco/0.55.1/min"
+    MonacoBaseUrl="https://cdn.jsdelivr.net/npm/monaco-editor@0.55.1/min"
     ... />
 ```
+
+This requires an internet connection at runtime.
 
 ## Requirements
 
@@ -218,15 +197,6 @@ Point to any URL that hosts the Monaco `min/vs` directory:
 - **Windows App SDK 1.8+** (WinUI 3)
 - **WebView2 Runtime** (ships with Windows 11; auto-installs with Edge on Windows 10)
 - **Windows 10 version 1809** (build 17763) or later
-
-## Contributing
-
-1. Fork and clone
-2. Open `MonacoEditor.WinUI3.sln` in Visual Studio 2022+
-3. Set `MonacoEditor.WinUI3.Sample` as the startup project
-4. Build and run (x64)
-
-PRs welcome — especially for additional Monaco API surface, accessibility improvements, and testing.
 
 ## License
 

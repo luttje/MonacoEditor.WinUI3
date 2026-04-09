@@ -61,7 +61,12 @@ Run the update script before a release to make sure you're shipping the latest e
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# Update to latest
 .\scripts\Update-Monaco.ps1
+
+# Update to a specific version
+.\scripts\Update-Monaco.ps1 -Version "0.55.1"
 ```
 
 ## Bundling Monaco into the NuGet Package

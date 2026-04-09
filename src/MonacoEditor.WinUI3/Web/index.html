@@ -17,6 +17,7 @@
 				width: 100%;
 				height: 100%;
 				overflow: hidden;
+				background-color: transparent;
 			}
 
 			#editor-container {
@@ -224,6 +225,15 @@
 				if (editor)
 					editor.layout();
 			});
+
+			/**
+			 * Apply theme-matched background to body element.
+			 * Called before Monaco loads to prevent FOUC.
+			 */
+			function applyThemeBackground(themeName) {
+				document.body.className = '';
+				document.body.classList.add('theme-' + themeName);
+			}
 		</script>
 	</body>
 </html>

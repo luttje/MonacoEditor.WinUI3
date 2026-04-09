@@ -28,6 +28,7 @@ public sealed partial class MonacoEditorControl : Control
     private string? _pendingTheme;
     private bool? _pendingReadOnly;
     private string? _pendingOptions;
+    private bool _hasShownWebView;
 
     /// <summary>Raised when the Monaco editor has finished loading and is ready.</summary>
     public event EventHandler? EditorReady;
@@ -253,6 +254,11 @@ public sealed partial class MonacoEditorControl : Control
                 }
             }
 
+            // Pre-apply theme background to prevent FOUC
+            var initialTheme = EditorTheme ?? "vs";
+            await _webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(
+                $"document.addEventListener('DOMContentLoaded', () => {{ applyThemeBackground('{EscapeJs(initialTheme)}'); }});");
+
             // Load the embedded HTML
             var html = LoadEmbeddedHtml();
             _webView.NavigateToString(html);
@@ -335,6 +341,16 @@ public sealed partial class MonacoEditorControl : Control
     {
         _isEditorReady = true;
 
+        // Show the WebView now that the editor is ready and themed
+        if (!_hasShownWebView && _webView is not null)
+        {
+            _hasShownWebView = true;
+            DispatcherQueue.TryEnqueue(() => 
+            {
+                _webView.Visibility = Visibility.Visible;
+            });
+        }
+
         // Flush any pending state
         if (_pendingText is not null) 
             PushTextToEditor(_pendingText);
@@ -401,7 +417,8 @@ public sealed partial class MonacoEditorControl : Control
             return;
         }
 
-        await _webView.ExecuteScriptAsync($"setTheme('{EscapeJs(theme)}');");
+        // Update both Monaco theme and body background
+        await _webView.ExecuteScriptAsync($"setTheme('{EscapeJs(theme)}'); applyThemeBackground('{EscapeJs(theme)}');");
     }
 
     private async void PushReadOnlyToEditor(bool readOnly)

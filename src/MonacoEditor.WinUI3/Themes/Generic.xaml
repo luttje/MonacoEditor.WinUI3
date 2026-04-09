@@ -17,7 +17,8 @@
                         <WebView2
                             x:Name="PART_WebView"
                             HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch" />
+                            VerticalAlignment="Stretch"
+                            Visibility="Collapsed" />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>

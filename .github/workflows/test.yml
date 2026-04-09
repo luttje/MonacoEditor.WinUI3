@@ -3,8 +3,16 @@ name: Test
 on:
   push:
     branches: [ main ]
+    paths:
+    - 'src/MonacoEditor.WinUI3/**'
+    - 'src/MonacoEditor.WinUI3.Tests/**'
+    - '.github/workflows/test.yml'
   pull_request:
     branches: [ main ]
+    paths:
+    - 'src/MonacoEditor.WinUI3/**'
+    - 'src/MonacoEditor.WinUI3.Tests/**'
+    - '.github/workflows/test.yml'
 
 jobs:
   test:

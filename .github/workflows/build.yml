@@ -3,8 +3,14 @@ name: Build
 on:
   push:
     branches: [ main ]
+    paths:
+    - 'src/MonacoEditor.WinUI3/**'
+    - '.github/workflows/build.yml'
   pull_request:
     branches: [ main ]
+    paths:
+    - 'src/MonacoEditor.WinUI3/**'
+    - '.github/workflows/build.yml'
 
 jobs:
   build:

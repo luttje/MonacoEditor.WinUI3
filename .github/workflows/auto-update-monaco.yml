@@ -32,7 +32,7 @@ jobs:
 
         echo "Latest tag: $TAG"
 
-        # Parse: 0.4.1-monaco.0.55.1 → pkg=0.4.1, monaco=0.55.1
+        # Parse: 0.5.0-monaco.0.55.1 → pkg=0.5.0, monaco=0.55.1
         PKG_VERSION="${TAG%%-monaco*}"
         MONACO_VERSION="${TAG##*-monaco.}"
 

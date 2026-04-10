@@ -19,10 +19,13 @@ A NuGet package that wraps the [Monaco Editor](https://microsoft.github.io/monac
 ### 1. Install
 
 ```sh
-dotnet add package MonacoEditor.WinUI3
+dotnet add package MonacoEditor.WinUI3 --prerelease
 ```
 
 Or via NuGet Package Manager in Visual Studio, search for `MonacoEditor.WinUI3`.
+
+ > [!IMPORTANT]
+> `--prerelease` is required when installing this package. The Monaco Editor version is encoded in the prerelease tag of the package version. When using NuGet, make sure to enable **Include Prerelease** to see and install this package.
 
 ### 2. Add the namespace
 

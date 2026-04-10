@@ -96,6 +96,7 @@ public partial class EditorViewModel : ObservableObject
 | `EditorLanguage` | `string` | `"plaintext"` | Language mode for syntax highlighting. |
 | `EditorTheme` | `string` | `"vs"` | Visual theme: `vs`, `vs-dark`, `hc-black`, `hc-light`. |
 | `IsReadOnly` | `bool` | `false` | Toggle read-only mode. |
+| `Options` | `MonacoEditorOptions?` | `null` | Typed editor options object. Changes to any property are automatically pushed to the editor. |
 | `MonacoBaseUrl` | `string?` | `null` | Override the Monaco source URL. Set to a CDN URL to load remotely instead of using bundled files. |
 
 ### Events
@@ -111,7 +112,8 @@ public partial class EditorViewModel : ObservableObject
 // Get/set text
 Task<string> GetTextAsync()
 
-// Editor options (pass any Monaco IEditorOptions as JSON)
+// Editor options — typed overload or raw JSON
+Task SetOptionsAsync(MonacoEditorOptions options)
 Task SetOptionsAsync(string optionsJson)
 
 // Cursor & selection
@@ -131,7 +133,7 @@ Task TriggerActionAsync(string actionId)
 await Editor.TriggerActionAsync("editor.action.formatDocument");
 ```
 
-### Example: Custom Editor Options
+### Example: Custom Editor Options (raw JSON)
 
 ```csharp
 await Editor.SetOptionsAsync("""
@@ -144,6 +146,49 @@ await Editor.SetOptionsAsync("""
 }
 """);
 ```
+
+## Typed Editor Options
+
+For a type-safe, IntelliSense-friendly alternative to raw JSON, use `MonacoEditorOptions`:
+
+```csharp
+Editor.Options = new MonacoEditorOptions
+{
+    FontSize = 16,
+    FontFamily = "Cascadia Code",
+    WordWrap = WordWrap.On,
+    Minimap = new MinimapOptions { Enabled = false, Side = MinimapSide.Left },
+    Scrollbar = new ScrollbarOptions { Vertical = ScrollbarVisibility.Hidden },
+};
+```
+
+Or via the async method overload:
+
+```csharp
+await Editor.SetOptionsAsync(new MonacoEditorOptions
+{
+    LineNumbers = LineNumbers.Relative,
+    FontLigatures = true,
+    Suggest = new SuggestOptions { ShowSnippets = false },
+});
+```
+
+### XAML data binding
+
+`MonacoEditorOptions` implements `INotifyPropertyChanged`, so you can bind it from XAML and mutate individual properties reactively:
+
+```xml
+<monaco:MonacoEditorControl
+    Options="{x:Bind ViewModel.EditorOptions, Mode=OneWay}" />
+```
+
+```csharp
+// Any property change is automatically pushed to the editor
+ViewModel.EditorOptions.FontSize = 18;
+ViewModel.EditorOptions.Minimap.Enabled = false;
+```
+
+String-union option types (e.g. `WordWrap`, `CursorStyle`, `MinimapSide`) have companion static classes with named constants so you never have to guess string values.
 
 ## How It Works
 

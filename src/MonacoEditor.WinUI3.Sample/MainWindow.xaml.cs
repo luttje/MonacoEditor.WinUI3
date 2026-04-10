@@ -34,6 +34,18 @@ public sealed partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    public MonacoEditorOptions EditorOptions { get; } = new()
+    {
+        CursorStyle = CursorStyle.BlockOutline,
+        AcceptSuggestionOnEnter = AcceptSuggestionOnEnter.On,
+        Suggest = new SuggestOptions() 
+        {
+            ShowVariables = false,
+            Preview = false,
+        },
+        Contextmenu = false,
+    };
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public MainWindow()

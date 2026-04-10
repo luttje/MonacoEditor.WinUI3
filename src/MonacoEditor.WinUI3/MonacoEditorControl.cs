@@ -154,6 +154,64 @@ public sealed partial class MonacoEditorControl : Control
 
     #endregion
 
+    #region Options
+
+    public static readonly DependencyProperty OptionsProperty =
+        DependencyProperty.Register(
+            nameof(Options),
+            typeof(MonacoEditorOptions),
+            typeof(MonacoEditorControl),
+            new PropertyMetadata(null, OnOptionsPropertyChanged)
+        );
+
+    /// <summary>
+    /// Gets or sets the typed Monaco editor options.
+    /// Any property change on the bound <see cref="MonacoEditorOptions"/> instance is
+    /// automatically serialised and pushed to the running editor.
+    /// This property supports one-way XAML data binding.
+    /// </summary>
+    public MonacoEditorOptions? Options
+    {
+        get => (MonacoEditorOptions?)GetValue(OptionsProperty);
+        set => SetValue(OptionsProperty, value);
+    }
+
+    private static void OnOptionsPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not MonacoEditorControl control)
+            return;
+
+        if (e.OldValue is MonacoEditorOptions oldOptions)
+            oldOptions.PropertyChanged -= control.OnOptionsObjectPropertyChanged;
+
+        if (e.NewValue is MonacoEditorOptions newOptions)
+        {
+            newOptions.PropertyChanged += control.OnOptionsObjectPropertyChanged;
+            control.PushOptionsObjectToEditor(newOptions);
+        }
+    }
+
+    private void OnOptionsObjectPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (Options is { } opts)
+            PushOptionsObjectToEditor(opts);
+    }
+
+    private async void PushOptionsObjectToEditor(MonacoEditorOptions options)
+    {
+        var json = options.Serialize();
+
+        if (!_isEditorReady || _webView is null)
+        {
+            _pendingOptions = json;
+            return;
+        }
+
+        await _webView.ExecuteScriptAsync(JsScripts.SetOptions(json));
+    }
+
+    #endregion
+
     #region MonacoBaseUrl
 
     public static readonly DependencyProperty MonacoBaseUrlProperty =
@@ -408,6 +466,15 @@ public sealed partial class MonacoEditorControl : Control
         var result = await _webView.ExecuteScriptAsync(JsScripts.GetText());
         return JsonSerializer.Deserialize<string>(result) ?? string.Empty;
     }
+
+    /// <summary>Applies typed editor options immediately and keeps them in sync.</summary>
+    /// <remarks>
+    /// This is a convenience overload that serialises <paramref name="options"/> to JSON and
+    /// calls <see cref="SetOptionsAsync(string)"/>. For reactive binding, assign the instance
+    /// to the <see cref="Options"/> dependency property instead.
+    /// </remarks>
+    public Task SetOptionsAsync(MonacoEditorOptions options)
+        => SetOptionsAsync(options.Serialize());
 
     /// <summary>Set arbitrary editor options as a JSON string.</summary>
     public async Task SetOptionsAsync(string optionsJson)

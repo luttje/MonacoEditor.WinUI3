@@ -7,6 +7,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Windows.UI.WebUI;
 
 namespace MonacoEditor.WinUI3;
 
@@ -260,6 +261,8 @@ public sealed partial class MonacoEditorControl : Control
         try
         {
             await _webView.EnsureCoreWebView2Async();
+
+            _webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
             if (!string.IsNullOrEmpty(MonacoBaseUrl) &&
                 (MonacoBaseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||

@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write # To dispatch the Pack & Publish workflow
 
     steps:
     - uses: actions/checkout@v6
@@ -107,3 +108,11 @@ jobs:
           **New Monaco version:** `${{ steps.latest.outputs.monaco_version }}`
 
           The package version was updated to `${{ steps.new_version.outputs.version }}`.
+
+    # A release created with GITHUB_TOKEN doesn't trigger other workflows, so
+    # start Pack & Publish explicitly (workflow_dispatch is the exception).
+    - name: Pack and publish to NuGet
+      if: steps.compare.outputs.needs_update == 'true'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: gh workflow run pack.yml --ref "${{ github.ref_name }}" -f tag="${{ steps.new_version.outputs.version }}"

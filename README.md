@@ -245,8 +245,8 @@ This requires an internet connection at runtime.
 
 ## Requirements
 
-- **.NET 8** or **.NET 9** (multi-targeted)
-- **Windows App SDK 1.8+** (WinUI 3)
+- **.NET 10** (`net10.0-windows10.0.19041.0`). Projects still on .NET 8 or .NET 9 can stay on the `0.5.x` releases.
+- **Windows App SDK 2.7+** (WinUI 3)
 - **WebView2 Runtime** (ships with Windows 11; auto-installs with Edge on Windows 10)
 - **Windows 10 version 1809** (build 17763) or later
 

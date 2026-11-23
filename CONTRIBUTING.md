@@ -4,7 +4,7 @@ So you've cloned the repo. Here's how to get from a fresh checkout to a publishe
 
 ## Prerequisites
 
-You'll need Visual Studio 2022 (17.8+) with the **.NET desktop development** and **Windows App SDK** workloads installed. Make sure you have the .NET 8 SDK — you can verify with `dotnet --version`. You'll also need a NuGet.org account; if you don't have one, create it at nuget.org and generate an API key under your profile with the "Push" scope.
+You'll need Visual Studio 2026 (or newer) with the **.NET desktop development** and **Windows App SDK** workloads installed. Make sure you have the .NET 10 SDK — you can verify with `dotnet --version`. You'll also need a NuGet.org account; if you don't have one, create it at nuget.org and generate an API key under your profile with the "Push" scope.
 
 ## Building Locally
 

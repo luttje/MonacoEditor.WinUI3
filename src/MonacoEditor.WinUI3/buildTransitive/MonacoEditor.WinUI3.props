@@ -1,0 +1,16 @@
+<Project>
+  <!--
+    Single source of truth for the Windows SDK projection (Microsoft.Windows.SDK.NET.Ref) that
+    MonacoEditor.WinUI3.dll is compiled against. The library csproj imports this file to pin
+    WindowsSdkPackageVersion, and the package ships it so MonacoEditor.WinUI3.targets can check
+    consumers against the same value.
+
+    Keep this at the LOWEST projection the library needs: the projection's revision decides which
+    WinRT.Runtime version the DLL references, and consumers whose .NET SDK defaults to an older
+    projection fail with CS1705. Every .NET 10 SDK (10.0.100 through 10.0.4xx) defaults to .57
+    (WinRT.Runtime 2.2.0); .NET SDK 11 defaults to .87 (WinRT.Runtime 2.3.1).
+  -->
+  <PropertyGroup>
+    <MonacoEditorWinUI3WindowsSdkPackageVersion>10.0.19041.57</MonacoEditorWinUI3WindowsSdkPackageVersion>
+  </PropertyGroup>
+</Project>

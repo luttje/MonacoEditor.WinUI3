@@ -1,7 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Defines MonacoEditorWinUI3WindowsSdkPackageVersion (shared with the packaged consumer check). -->
+  <Import Project="buildTransitive\MonacoEditor.WinUI3.props" />
+
   <PropertyGroup>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <!--
+      Pin the Windows SDK projection explicitly. Left implicit, it follows whichever .NET SDK runs
+      the build (SDK 11 picks a newer projection than SDK 10), which leaks a newer WinRT.Runtime
+      requirement to consumers and breaks them with CS1705. See buildTransitive\MonacoEditor.WinUI3.props.
+    -->
+    <WindowsSdkPackageVersion>$(MonacoEditorWinUI3WindowsSdkPackageVersion)</WindowsSdkPackageVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>MonacoEditor.WinUI3</RootNamespace>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
@@ -47,6 +56,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="" />
+    <None Include="buildTransitive\MonacoEditor.WinUI3.props;buildTransitive\MonacoEditor.WinUI3.targets" Pack="true" PackagePath="buildTransitive\;build\" />
   </ItemGroup>
 
 </Project>

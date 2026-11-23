@@ -1,0 +1,30 @@
+<Project>
+  <!--
+    Fails early with an actionable message when the consumer resolves an older Windows SDK
+    projection than MonacoEditor.WinUI3.dll was compiled against. Without this check the build
+    fails later with CS1705 (or a XAML compiler WMC9999 crash) about WinRT.Runtime.
+
+    This can't raise the consumer's projection automatically: NuGet evaluates projects with
+    ExcludeRestorePackageImports=true, so a package can't change which targeting pack restore
+    downloads. Setting WindowsSdkPackageVersion has to happen in the consumer's own project.
+  -->
+  <Target Name="MonacoEditorWinUI3CheckWindowsSdkPackageVersion"
+          AfterTargets="ResolveTargetingPackAssets"
+          Condition="'$(MonacoEditorWinUI3WindowsSdkPackageVersion)' != ''">
+    <PropertyGroup>
+      <_MonacoEditorWinUI3RequiredRevision>$([System.Version]::Parse('$(MonacoEditorWinUI3WindowsSdkPackageVersion.Split('-')[0])').Revision)</_MonacoEditorWinUI3RequiredRevision>
+    </PropertyGroup>
+    <ItemGroup>
+      <_MonacoEditorWinUI3WindowsSdkRef Include="@(ResolvedFrameworkReference)"
+                                        Condition="'%(Identity)' == 'Microsoft.Windows.SDK.NET.Ref' or '%(Identity)' == 'Microsoft.Windows.SDK.NET.Ref.Windows'" />
+      <_MonacoEditorWinUI3WindowsSdkTooOld Include="@(_MonacoEditorWinUI3WindowsSdkRef)"
+                                           Condition="$([System.Version]::Parse($([System.String]::Copy('%(TargetingPackVersion)').Split('-')[0])).Revision) &lt; $(_MonacoEditorWinUI3RequiredRevision)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_MonacoEditorWinUI3ResolvedWindowsSdk>@(_MonacoEditorWinUI3WindowsSdkTooOld->'%(TargetingPackVersion)'->Distinct())</_MonacoEditorWinUI3ResolvedWindowsSdk>
+    </PropertyGroup>
+    <Error Condition="'$(_MonacoEditorWinUI3ResolvedWindowsSdk)' != ''"
+           Code="MONACOWINUI001"
+           Text="MonacoEditor.WinUI3 requires Microsoft.Windows.SDK.NET.Ref revision $(_MonacoEditorWinUI3RequiredRevision) or later, but this project resolved $(_MonacoEditorWinUI3ResolvedWindowsSdk). Add &lt;WindowsSdkPackageVersion&gt;10.0.&lt;build&gt;.$(_MonacoEditorWinUI3RequiredRevision)&lt;/WindowsSdkPackageVersion&gt; (or newer) to your project, using the build number from your TargetFramework, or update your .NET SDK." />
+  </Target>
+</Project>
